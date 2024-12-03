@@ -266,7 +266,7 @@ if __name__ == "__main__":
                         default="eval_record_collection.csv")
     parser.add_argument("--gpu_util", "-gu", type=str, default="0.9")
     # parser.add_argument("--model", "-m", type=str, default="meta-llama/Llama-2-7b-hf")
-    parser.add_argument("--model", "-m", type=str, default="/home/shaohanh/qilongma/blob/public_models/QwQ-32B-Preview")
+    parser.add_argument("--model", "-m", type=str, default="/home/shaohanh/qilongma/blob/public_models/Qwen2.5-32B-Instruct")
     args = parser.parse_args()
 
     os.makedirs(args.save_dir, exist_ok=True)
