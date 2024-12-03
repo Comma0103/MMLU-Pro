@@ -3,7 +3,7 @@ from pathlib import Path
 import json
 import re
 import matplotlib.pyplot as plt
-from collections import defaultdict
+from collections import defaultdict, Counter
 
 def categorize_steps(step):
     """将步数归类到指定的桶"""
@@ -15,12 +15,13 @@ def categorize_steps(step):
         return 9
 
 def calculate_steps_and_accuracy(file_path):
-    """从 JSON 文件中提取步数和正确率数据"""
+    """从 JSON 文件中提取步数和正确率数据，同时统计步数分布"""
     with open(file_path, "r") as f:
         data = json.load(f)
     
     steps_correct = defaultdict(list)
-    
+    steps_distribution = []  # 用于统计步数分布
+
     for entry in data:
         question = entry["question"]
         answer = entry["answer"]
@@ -34,13 +35,14 @@ def calculate_steps_and_accuracy(file_path):
             if re.search(answer_pattern, sentence):
                 categorized_step = categorize_steps(i + 1)
                 steps_correct[categorized_step].append(pred == answer)
+                steps_distribution.append(categorized_step)
                 break
     
     steps_accuracy = {}
     for step, correctness in steps_correct.items():
         steps_accuracy[step] = sum(correctness) / len(correctness)
     
-    return steps_accuracy
+    return steps_accuracy, steps_distribution
 
 def plot_category_graph(category, steps_accuracy, save_path):
     """绘制单个 category 的图并保存"""
@@ -63,11 +65,24 @@ def plot_steps_vs_accuracy(directory):
     """绘制推理步数与正确率的关系图"""
     all_files = [f for f in os.listdir(directory) if f.endswith(".json")]
     category_data = {}
+    steps_distributions = {}
     
     for file in all_files:
         file_path = os.path.join(directory, file)
         category = os.path.splitext(file)[0]
-        category_data[category] = calculate_steps_and_accuracy(file_path)
+        steps_accuracy, steps_distribution = calculate_steps_and_accuracy(file_path)
+        category_data[category] = steps_accuracy
+        steps_distributions[category] = Counter(steps_distribution)
+    
+    # 打印步数分布
+    for category, distribution in steps_distributions.items():
+        print(f"Category: {category}")
+        for step in sorted(distribution.keys()):
+            bucket_label = (
+                str(step) if step <= 7 else "8-10" if step == 8 else ">10"
+            )
+            print(f"  Steps {bucket_label}: {distribution[step]} questions")
+        print()
     
     # 绘制每个 category 的图并保存
     save_path = Path(directory) / "step_accu_curve"
