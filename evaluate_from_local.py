@@ -103,7 +103,7 @@ def generate_cot_prompt(val_df, curr, k):
 
 
 def extract_answer(text):
-    pattern = r"answer is \(?([A-J])\)?"
+    pattern = r"answer is \(?([A-J])\)?" # 在文本中找到以 answer is 开头，后面紧跟一个范围为 A-J 的字母（可选地被括号 () 包裹）的匹配项，并捕获字母作为结果。
     match = re.search(pattern, text)
     if match:
         return match.group(1)
@@ -113,7 +113,7 @@ def extract_answer(text):
 
 
 def extract_again(text):
-    match = re.search(r'.*[aA]nswer:\s*([A-J])', text)
+    match = re.search(r'.*[aA]nswer:\s*([A-J])', text) # 最后一个匹配 Answer: 或 answer: 后紧跟一个范围为 A-J 的字母，并捕获该字母作为结果。
     if match:
         return match.group(1)
     else:
@@ -121,7 +121,7 @@ def extract_again(text):
 
 
 def extract_final(text):
-    pattern = r"\b[A-J]\b(?!.*\b[A-J]\b)"
+    pattern = r"\b[A-J]\b(?!.*\b[A-J]\b)" # 文本中最后一个独立的大写字母（范围 A-J）
     match = re.search(pattern, text, re.DOTALL)
     if match:
         return match.group(0)
@@ -196,8 +196,6 @@ def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
         res.append(curr)
     accu, corr, wrong = save_res(res, output_path)
     logging.info("this batch accu is: {}, corr: {}, wrong: {}\n".format(str(accu), str(corr), str(wrong)))
-
-    accu, corr, wrong = save_res(res, output_path)
     return accu, corr, wrong
 
 
