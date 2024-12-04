@@ -35,10 +35,14 @@ def load_model():
                 max_model_len=max_model_length,
                 trust_remote_code=True)
     logging.info(f"Load model {args.model} complete!")
-    sampling_params = SamplingParams(temperature=0, max_tokens=max_new_tokens,
-                                        stop=["Question:"])
     tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     logging.info(f"Load tokenizer complete!")
+    sampling_params = SamplingParams(temperature=0, max_tokens=max_new_tokens,
+                                    stop_token_ids=[
+                                        tokenizer.eos_token_id, 
+                                        tokenizer.convert_tokens_to_ids("<|end_of_text|>"),
+                                        tokenizer.convert_tokens_to_ids("Question:")
+                                    ])
     return (llm, sampling_params), tokenizer
 
 
@@ -140,7 +144,7 @@ def batch_inference(llm, sampling_params, inference_batch):
         response_batch.append(generated_text)
         pred = extract_answer(generated_text)
         pred_batch.append(pred)
-    return pred_batch, response_batch
+    return pred_batch, response_batch, inference_batch
 
 
 def save_res(res, output_path):
@@ -188,11 +192,12 @@ def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
             k -= 1
         inference_batches.append(prompt)
 
-    pred_batch, response_batch = batch_inference(llm, sampling_params, inference_batches)
+    pred_batch, response_batch, inference_batch = batch_inference(llm, sampling_params, inference_batches)
     res = []
     for j, curr in enumerate(test_df):
         curr["pred"] = pred_batch[j]
         curr["model_outputs"] = response_batch[j]
+        curr["model_input"] = inference_batch[j]
         res.append(curr)
     accu, corr, wrong = save_res(res, output_path)
     logging.info("this batch accu is: {}, corr: {}, wrong: {}\n".format(str(accu), str(corr), str(wrong)))
