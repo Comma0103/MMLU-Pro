@@ -5,6 +5,7 @@ import re
 import matplotlib.pyplot as plt
 from collections import defaultdict, Counter
 
+
 def categorize_steps(step):
     """将步数归类到指定的桶"""
     if step <= 7:
