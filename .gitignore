@@ -10,3 +10,4 @@ local_evaluate_wenxin/
 
 log/
 results/
+__pycache__/

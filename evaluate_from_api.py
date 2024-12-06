@@ -126,7 +126,7 @@ def batch_inference(oai_client, inference_batch):
     start = time.time()
     response_batch = []
     pred_batch = []
-    for prompt in inference_batch:
+    for prompt in tqdm(inference_batch):
         response = oai_client.call(prompt, return_logits=False, max_tokens=max_new_tokens, temperature=temperature)
         response_batch.append(response)
         pred = extract_answer(response)
@@ -163,9 +163,9 @@ def save_res(res, output_path):
 @torch.no_grad()
 def eval_cot(subject, oai_client, val_df, test_df, output_path):
     global choices
-    logging.info("evaluating " + subject)
     inference_batches = []
 
+    logging.info("generating prompts for " + subject)
     for i in tqdm(range(len(test_df))):
         k = args.ntrain
         curr = test_df[i]
@@ -178,6 +178,7 @@ def eval_cot(subject, oai_client, val_df, test_df, output_path):
             k -= 1
         inference_batches.append(prompt)
 
+    logging.info("evaluating " + subject)
     pred_batch, response_batch, inference_batch = batch_inference(oai_client, inference_batches)
     res = []
     for j, curr in enumerate(test_df):
@@ -257,7 +258,7 @@ if __name__ == "__main__":
     parser.add_argument("--global_record_file", "-grf", type=str,
                         default="eval_record_collection.csv")
     parser.add_argument("--gpu_util", "-gu", type=str, default="0.9")
-    parser.add_argument("--model", "-m", type=str, default="OpenAI-GPT-4o")
+    parser.add_argument("--model", "-m", type=str, default="OpenAI-GPT-4o-mini")
     args = parser.parse_args()
 
     global_record_file = args.global_record_file
@@ -274,7 +275,7 @@ if __name__ == "__main__":
     os.makedirs(os.path.join(args.save_dir, "summary"), exist_ok=True)
     save_log_dir = os.path.join(args.save_dir, "log")
     os.makedirs(save_log_dir, exist_ok=True)
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)s %(message)s',
+    logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s',
                         handlers=[logging.FileHandler(os.path.join(save_log_dir,
                                                                    file_name.replace("_summary.txt",
                                                                                      "_logfile.log"))),

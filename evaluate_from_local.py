@@ -175,9 +175,9 @@ def save_res(res, output_path):
 def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
     llm, sampling_params = model
     global choices
-    logging.info("evaluating " + subject)
     inference_batches = []
 
+    logging.info("generating prompts for " + subject)
     for i in tqdm(range(len(test_df))):
         k = args.ntrain
         curr = test_df[i]
@@ -193,6 +193,7 @@ def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
             k -= 1
         inference_batches.append(prompt)
 
+    logging.info("evaluating " + subject)
     pred_batch, response_batch, inference_batch = batch_inference(llm, sampling_params, inference_batches)
     res = []
     for j, curr in enumerate(test_df):
