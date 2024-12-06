@@ -60,10 +60,11 @@ def preprocess(test_df):
 
 
 def args_generate_path(input_args):
-    scoring_method = "CoT"
     model_name = input_args.model.split("/")[-1]
+    scoring_method = "CoT"
     subjects = args.selected_subjects.replace(",", "-").replace(" ", "_")
-    return [model_name, scoring_method, subjects]
+    k = input_args.ntrain
+    return [model_name, scoring_method, subjects, f"{k}-shot"]
 
 
 def select_by_category(df, subject):
@@ -269,11 +270,11 @@ if __name__ == "__main__":
                         default="eval_record_collection.csv")
     parser.add_argument("--gpu_util", "-gu", type=str, default="0.9")
     # parser.add_argument("--model", "-m", type=str, default="meta-llama/Llama-2-7b-hf")
-    parser.add_argument("--model", "-m", type=str, default="/home/shaohanh/qilongma/blob/public_models/Qwen2.5-32B-Instruct")
+    parser.add_argument("--model", "-m", type=str, default="/home/shaohanh/qilongma/blob/public_models/QwQ-32B-Preview")
     args = parser.parse_args()
 
-    os.makedirs(args.save_dir, exist_ok=True)
     global_record_file = args.global_record_file
+    os.makedirs(args.save_dir, exist_ok=True)
     save_result_dir = os.path.join(
         args.save_dir, "/".join(args_generate_path(args))
     )
