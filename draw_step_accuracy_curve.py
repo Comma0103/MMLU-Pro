@@ -108,5 +108,5 @@ def plot_steps_vs_accuracy(directory):
     plt.show()
 
 # 使用示例
-json_directory = "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all"  # 替换为存放 JSON 文件的目录路径
+json_directory = "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all/5-shot"  # 替换为存放 JSON 文件的目录路径
 plot_steps_vs_accuracy(json_directory)

@@ -129,11 +129,11 @@ def plot_token_accuracy_by_category(directories, model_names, bins, output_dir="
 
 # 使用示例
 json_directories = [
-    "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all",  # 替换为模型 1 的 JSON 文件目录路径
-    "/home/shaohanh/qilongma/MMLU-Pro/results/Qwen2.5-32B-Instruct/CoT/all",  # 替换为模型 2 的 JSON 文件目录路径
+    "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all/5-shot",  # 替换为模型 1 的 JSON 文件目录路径
+    "/home/shaohanh/qilongma/MMLU-Pro/results/Qwen2.5-32B-Instruct/CoT/all/5-shot",  # 替换为模型 2 的 JSON 文件目录路径
     # 添加更多模型路径...
 ]
 model_names = ["QwQ-32B-Preview", "Qwen2.5-32B-Instruct"]  # 替换为对应模型的名称
 
 bins = determine_bins_by_quantile(json_directories, num_bins=10)
-plot_token_accuracy_by_category(json_directories, model_names, bins, output_dir="results/multimodel_token_accu_curve")
+plot_token_accuracy_by_category(json_directories, model_names, bins, output_dir="results/multimodel_token_accu_curve_5-shot")

@@ -7,6 +7,9 @@ from collections import defaultdict, Counter
 import re
 
 
+MAX_NEW_TOKENS = 2048
+
+
 def calculate_bins(values, num_bins):
     """根据输出 token 数生成均匀分布的桶边界"""
     return np.percentile(values, np.linspace(0, 100, num_bins + 1))
@@ -17,6 +20,49 @@ def categorize_into_bins(value, bins):
         if bins[i] <= value < bins[i + 1]:
             return i + 1
     return len(bins)  # 超过最后一个桶
+
+
+def extract_answer(text):
+    """
+    提取答案字母和到该字母位置的 token 数量。
+    """
+    pattern = r"[aA]nswer is \(?([A-J])\)?"  # 匹配 Answer is (X) 格式
+    match = re.search(pattern, text)
+    if match:
+        answer = match.group(1)
+        tokens_count = len(re.split(r"\s+", text[:match.start()]))
+        return answer, tokens_count
+    else:
+        # 如果第一个提取失败，进入第二种模式
+        return extract_again(text)
+
+def extract_again(text):
+    """
+    第二种模式提取答案，格式为 Answer: X。
+    """
+    match = re.search(r'.*[aA]nswer:\s*([A-J])', text)
+    if match:
+        answer = match.group(1)
+        tokens_count = len(re.split(r"\s+", text[:match.start()]))
+        return answer, tokens_count
+    else:
+        # 如果第二种提取失败，进入第三种模式
+        return extract_final(text)
+
+def extract_final(text):
+    """
+    第三种模式提取答案，查找最后一个独立的大写字母 A-J。
+    """
+    pattern = r"\b[A-J]\b(?!.*\b[A-J]\b)"  # 匹配最后一个大写字母 A-J
+    match = re.search(pattern, text, re.DOTALL)
+    if match:
+        answer = match.group(0)
+        tokens_count = len(re.split(r"\s+", text[:match.start()]))
+        return answer, tokens_count
+    else:
+        # 如果所有提取失败，返回 None
+        print(text)
+        return None, None
 
 def calculate_tokens_and_accuracy(file_path, bins):
     """从 JSON 文件中提取 token 数和正确率数据，同时统计 token 分布"""
@@ -33,13 +79,16 @@ def calculate_tokens_and_accuracy(file_path, bins):
         model_outputs = entry["model_outputs"]
 
         # 使用正则表达式查找到答案为止
-        sentences = re.split(r'\.\s+', model_outputs)
-        answer_pattern = r"[aA]nswer is \(?([A-J])\)?"
-        token_count = 0
-        for sentence in sentences:
-            token_count += len(sentence.split())  # 累加 token 数
-            if re.search(answer_pattern, sentence):
-                break
+        # sentences = re.split(r'\.\s+', model_outputs)
+        # answer_pattern = r"[aA]nswer is \(?([A-J])\)?"
+        # token_count = 0
+        # for sentence in sentences:
+        #     token_count += len(sentence.split())  # 累加 token 数
+        #     if re.search(answer_pattern, sentence):
+        #         break
+        _, token_count = extract_answer(model_outputs)
+        if token_count is None:
+            token_count = MAX_NEW_TOKENS
 
         bin_category = categorize_into_bins(token_count, bins)
         tokens_correct[bin_category].append(pred == answer)
@@ -86,13 +135,16 @@ def plot_tokens_vs_accuracy(directory):
             model_outputs = entry["model_outputs"]
 
             # 计算到出现答案为止的 token 数
-            sentences = re.split(r'\.\s+', model_outputs)
-            answer_pattern = r"[aA]nswer is \(?([A-J])\)?"
-            token_count = 0
-            for sentence in sentences:
-                token_count += len(sentence.split())
-                if re.search(answer_pattern, sentence):
-                    break
+            # sentences = re.split(r'\.\s+', model_outputs)
+            # answer_pattern = r"[aA]nswer is \(?([A-J])\)?"
+            # token_count = 0
+            # for sentence in sentences:
+            #     token_count += len(sentence.split())
+            #     if re.search(answer_pattern, sentence):
+            #         break
+            _, token_count = extract_answer(model_outputs)
+            if token_count is None:
+                token_count = MAX_NEW_TOKENS
             all_token_counts.append(token_count)
 
     # 计算均匀分布的桶边界
@@ -139,5 +191,5 @@ def plot_tokens_vs_accuracy(directory):
     plt.show()
 
 # 使用示例
-json_directory = "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all"  # 替换为存放 JSON 文件的目录路径
+json_directory = "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all/0-shot"  # 替换为存放 JSON 文件的目录路径
 plot_tokens_vs_accuracy(json_directory)
