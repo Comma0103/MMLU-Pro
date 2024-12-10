@@ -11,3 +11,5 @@ local_evaluate_wenxin/
 log/
 results/
 __pycache__/
+
+call_gpt.py

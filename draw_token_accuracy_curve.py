@@ -27,7 +27,11 @@ def extract_answer(text):
     提取答案字母和到该字母位置的 token 数量。
     """
     pattern = r"[aA]nswer is \(?([A-J])\)?"  # 匹配 Answer is (X) 格式
-    match = re.search(pattern, text)
+    try:
+        match = re.search(pattern, str(text))
+    except Exception as e:
+        print(f"Error {str(e)} in extracting answer in response: " + text)
+        return None, None
     if match:
         answer = match.group(1)
         tokens_count = len(re.split(r"\s+", text[:match.start()]))
@@ -40,7 +44,7 @@ def extract_again(text):
     """
     第二种模式提取答案，格式为 Answer: X。
     """
-    match = re.search(r'.*[aA]nswer:\s*([A-J])', text)
+    match = re.search(r'.*[aA]nswer:\s*([A-J])', str(text))
     if match:
         answer = match.group(1)
         tokens_count = len(re.split(r"\s+", text[:match.start()]))
@@ -54,7 +58,7 @@ def extract_final(text):
     第三种模式提取答案，查找最后一个独立的大写字母 A-J。
     """
     pattern = r"\b[A-J]\b(?!.*\b[A-J]\b)"  # 匹配最后一个大写字母 A-J
-    match = re.search(pattern, text, re.DOTALL)
+    match = re.search(pattern, str(text), re.DOTALL)
     if match:
         answer = match.group(0)
         tokens_count = len(re.split(r"\s+", text[:match.start()]))
@@ -191,5 +195,5 @@ def plot_tokens_vs_accuracy(directory):
     plt.show()
 
 # 使用示例
-json_directory = "/home/shaohanh/qilongma/MMLU-Pro/results/QwQ-32B-Preview/CoT/all/0-shot"  # 替换为存放 JSON 文件的目录路径
+json_directory = "/home/shaohanh/qilongma/MMLU-Pro/results/OpenAI-GPT-4o-mini/CoT/all/0-shot"  # 替换为存放 JSON 文件的目录路径
 plot_tokens_vs_accuracy(json_directory)

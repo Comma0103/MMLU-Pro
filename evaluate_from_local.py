@@ -178,7 +178,7 @@ def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
     inference_batches = []
 
     logging.info("generating prompts for " + subject)
-    for i in tqdm(range(len(test_df))):
+    for i in tqdm(range(len(test_df)), ncols=75):
         k = args.ntrain
         curr = test_df[i]
         prompt_length_ok = False

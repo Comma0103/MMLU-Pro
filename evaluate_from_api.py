@@ -97,7 +97,10 @@ def generate_cot_prompt(val_df, curr, k):
 
 def extract_answer(text):
     pattern = r"answer is \(?([A-J])\)?" # 在文本中找到以 answer is 开头，后面紧跟一个范围为 A-J 的字母（可选地被括号 () 包裹）的匹配项，并捕获字母作为结果。
-    match = re.search(pattern, text)
+    try:
+        match = re.search(pattern, str(text))
+    except Exception as e:
+        logging.info(f"Error {str(e)} in extracting answer in response: " + text)
     if match:
         return match.group(1)
     else:
@@ -126,9 +129,13 @@ def batch_inference(oai_client, inference_batch):
     start = time.time()
     response_batch = []
     pred_batch = []
-    for prompt in tqdm(inference_batch):
+    for prompt in tqdm(inference_batch, ncols=75):
         response = oai_client.call(prompt, return_logits=False, max_tokens=max_new_tokens, temperature=temperature)
         response_batch.append(response)
+        if response is None:
+            logging.info("response is None")
+            pred_batch.append(None)
+            continue
         pred = extract_answer(response)
         if not pred:
             logging.info("answer extract failed:\n" + response)
@@ -166,7 +173,7 @@ def eval_cot(subject, oai_client, val_df, test_df, output_path):
     inference_batches = []
 
     logging.info("generating prompts for " + subject)
-    for i in tqdm(range(len(test_df))):
+    for i in tqdm(range(len(test_df)), ncols=75):
         k = args.ntrain
         curr = test_df[i]
         prompt_length_ok = False
@@ -258,7 +265,7 @@ if __name__ == "__main__":
     parser.add_argument("--global_record_file", "-grf", type=str,
                         default="eval_record_collection.csv")
     parser.add_argument("--gpu_util", "-gu", type=str, default="0.9")
-    parser.add_argument("--model", "-m", type=str, default="OpenAI-GPT-4o-mini")
+    parser.add_argument("--model", "-m", type=str, default="OpenAI-GPT-4o")
     args = parser.parse_args()
 
     global_record_file = args.global_record_file
