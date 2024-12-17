@@ -13,9 +13,10 @@ import logging
 import sys
 from datasets import load_dataset
 
-choices = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-max_model_length = 4096
-max_new_tokens = 2048
+CHOICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+MAX_MODEL_LENGTH = 4096
+MAX_NEW_TOKENS = 2048
+TEMPERATURE = 0.8
 
 
 def load_mmlu_pro():
@@ -32,12 +33,12 @@ def load_mmlu_pro():
 def load_model():
     llm = LLM(model=args.model, gpu_memory_utilization=float(args.gpu_util),
                 tensor_parallel_size=torch.cuda.device_count(),
-                max_model_len=max_model_length,
+                max_model_len=MAX_MODEL_LENGTH,
                 trust_remote_code=True)
     logging.info(f"Load model {args.model} complete!")
     tokenizer = transformers.AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
     logging.info(f"Load tokenizer complete!")
-    sampling_params = SamplingParams(temperature=0, max_tokens=max_new_tokens,
+    sampling_params = SamplingParams(temperature=TEMPERATURE, max_tokens=MAX_NEW_TOKENS,
                                     stop_token_ids=[
                                         tokenizer.eos_token_id, 
                                         tokenizer.convert_tokens_to_ids("<|end_of_text|>"),
@@ -82,7 +83,7 @@ def format_cot_example(example, including_answer=True):
     prompt += question + "\n"
     prompt += "Options:\n"
     for i, opt in enumerate(options):
-        prompt += "{}. {}\n".format(choices[i], opt)
+        prompt += "{}. {}\n".format(CHOICES[i], opt)
     if including_answer:
         cot_content = example["cot_content"].replace("A: Let's think step by step.",
                                                      "Answer: Let's think step by step.")
@@ -174,7 +175,7 @@ def save_res(res, output_path):
 @torch.no_grad()
 def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
     llm, sampling_params = model
-    global choices
+    global CHOICES
     inference_batches = []
 
     logging.info("generating prompts for " + subject)
@@ -188,7 +189,7 @@ def eval_cot(subject, model, tokenizer, val_df, test_df, output_path):
             inputs = tokenizer(prompt, return_tensors="pt")
             inputs = {key: value.cuda() for key, value in inputs.items()}
             length = len(inputs["input_ids"][0])
-            if length < max_model_length - max_new_tokens:
+            if length < MAX_MODEL_LENGTH - MAX_NEW_TOKENS:
                 prompt_length_ok = True
             k -= 1
         inference_batches.append(prompt)

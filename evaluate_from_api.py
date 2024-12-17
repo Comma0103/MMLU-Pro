@@ -17,10 +17,10 @@ from call_gpt import Openai, API_INFOS
 from crop import crop_prompt
 
 
-choices = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-max_model_length = 4096
-max_new_tokens = 2048
-temperature = 0.0
+CHOICES = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
+MAX_MODEL_LENGTH = 4096
+MAX_NEW_TOKENS = 2048
+TEMPERATURE = 0.8
 
 
 def load_mmlu_pro():
@@ -70,7 +70,7 @@ def format_cot_example(example, including_answer=True):
     prompt += question + "\n"
     prompt += "Options:\n"
     for i, opt in enumerate(options):
-        prompt += "{}. {}\n".format(choices[i], opt)
+        prompt += "{}. {}\n".format(CHOICES[i], opt)
     if including_answer:
         cot_content = example["cot_content"].replace("A: Let's think step by step.",
                                                      "Answer: Let's think step by step.")
@@ -130,7 +130,7 @@ def batch_inference(oai_client, inference_batch):
     response_batch = []
     pred_batch = []
     for prompt in tqdm(inference_batch, ncols=75):
-        response = oai_client.call(prompt, return_logits=False, max_tokens=max_new_tokens, temperature=temperature)
+        response = oai_client.call(prompt, return_logits=False, max_tokens=MAX_NEW_TOKENS, temperature=TEMPERATURE)
         response_batch.append(response)
         if response is None:
             logging.info("response is None")
@@ -169,7 +169,7 @@ def save_res(res, output_path):
 
 @torch.no_grad()
 def eval_cot(subject, oai_client, val_df, test_df, output_path):
-    global choices
+    global CHOICES
     inference_batches = []
 
     logging.info("generating prompts for " + subject)
@@ -180,7 +180,7 @@ def eval_cot(subject, oai_client, val_df, test_df, output_path):
         prompt = None
         while not prompt_length_ok:
             prompt = generate_cot_prompt(val_df, curr, k)
-            if crop_prompt(prompt, max_model_length - max_new_tokens) == prompt:
+            if crop_prompt(prompt, MAX_MODEL_LENGTH - MAX_NEW_TOKENS) == prompt:
                 prompt_length_ok = True
             k -= 1
         inference_batches.append(prompt)
